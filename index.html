@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방탈출</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="timer-display">60:00</div>
+    
+    <div class="hint-section">
+        <h2>힌트 / 정답 조회</h2>
+        <input type="text" id="qNumber" placeholder="문제 번호를 입력하세요">
+        <button id="btn-hint">확인</button>
+        <div id="hint-result"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let timerState = { remainingSeconds: 3600, isRunning: false, lastUpdateTime: null };
+        const timerDisplay = document.getElementById('timer-display');
+        
+        socket.on('timer_update', (state) => {
+            timerState = state;
+            updateDisplay();
+        });
+
+        let lastAppliedPhase = null;
+
+        function updateBackground(currentRemaining) {
+            const minutes = currentRemaining / 60;
+            let phase = 6;
+
+            if (minutes >= 30) {
+                phase = 1; // 30 ~ 40m: Serene Buddha temple
+            } else if (minutes >= 20) {
+                phase = 2; // 20 ~ 30m: Ominous Buddha temple
+            } else if (minutes >= 10) {
+                phase = 4; // 10 ~ 20m: Occult Room (Cult starter)
+            } else {
+                phase = 6; // 0 ~ 10m: Intense Cult Chamber (Cult climax)
+            }
+
+            if (phase !== lastAppliedPhase) {
+                lastAppliedPhase = phase;
+                document.body.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('/images/bg_phase${phase}.jpg')`;
+            }
+        }
+
+        function updateDisplay() {
+            let currentRemaining = timerState.remainingSeconds;
+            
+            if (timerState.isRunning && timerState.lastUpdateTime) {
+                const elapsed = Math.floor((Date.now() - timerState.lastUpdateTime) / 1000);
+                currentRemaining = Math.max(0, currentRemaining - elapsed);
+            }
+            
+            updateBackground(currentRemaining);
+            
+            const minutes = Math.floor(currentRemaining / 60).toString().padStart(2, '0');
+            const seconds = (currentRemaining % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${minutes}:${seconds}`;
+        }
+
+        // Update timer every second
+        setInterval(updateDisplay, 1000);
+
+        // Hint Logic
+        const btnHint = document.getElementById('btn-hint');
+        const inputQNumber = document.getElementById('qNumber');
+        const resultDiv = document.getElementById('hint-result');
+
+        // Reset result when input changes
+        inputQNumber.addEventListener('input', () => {
+            resultDiv.innerHTML = '';
+        });
+
+        btnHint.addEventListener('click', async () => {
+            const qNumber = inputQNumber.value.trim();
+            if (!qNumber) return;
+
+            try {
+                const res = await fetch('/api/hint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ qNumber })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div style="margin-bottom: 15px;">
+                            <strong>힌트:</strong> ${data.hint || '-'}
+                        </div>
+                        <button id="btn-show-answer" style="background-color: #ff9800; font-size: 0.9rem; padding: 6px 12px;">정답 보기</button>
+                        <div id="answer-box" style="margin-top: 15px; display: none;">
+                            <strong>정답:</strong> ${data.answer || '-'}
+                        </div>
+                    `;
+
+                    // Add listener to show the answer
+                    document.getElementById('btn-show-answer').addEventListener('click', function() {
+                        document.getElementById('answer-box').style.display = 'block';
+                        this.style.display = 'none'; // Hide "Show Answer" button
+                    });
+                } else {
+                    resultDiv.innerHTML = `<span style="color: #ffaaaa;">${data.message}</span>`;
+                }
+            } catch (err) {
+                console.error(err);
+                resultDiv.innerHTML = `<span style="color: #ffaaaa;">오류가 발생했습니다.</span>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-section" class="admin-container" style="max-width: 400px; display: none;">
+        <h2>관리자 로그인</h2>
+        <input type="password" id="admin-password" placeholder="비밀번호 입력">
+        <button id="btn-login" style="width: 100%">로그인</button>
+        <div id="login-error" style="color: #ffaaaa; margin-top: 10px;"></div>
+    </div>
+
+    <div id="admin-dashboard" class="admin-container" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2>방탈출 관리자</h2>
+            <button id="btn-logout" class="danger">로그아웃</button>
+        </div>
+
+        <div class="control-group">
+            <h3>타이머 제어 (<span id="admin-timer-display">60:00</span>)</h3>
+            <div style="margin-bottom: 1rem;">
+                <input type="number" id="set-time-min" placeholder="분" style="width: 80px; margin-right: 5px;">
+                <button id="btn-set-time">시간 설정</button>
+            </div>
+            <div>
+                <button id="btn-start">시작</button>
+                <button id="btn-pause">일시정지</button>
+                <button id="btn-add-10m">+ 10분</button>
+                <button id="btn-sub-10m">- 10분</button>
+            </div>
+        </div>
+
+        <div class="control-group" style="border-bottom: none;">
+            <h3>힌트/정답 관리</h3>
+            <div id="hints-container"></div>
+            <button id="btn-add-hint" style="margin-top: 10px; background-color: #2196F3;">+ 새 항목 추가</button>
+            <br><br>
+            <button id="btn-save-hints" style="width: 100%; font-size: 1.1rem;">변경사항 저장</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let timerState = { remainingSeconds: 3600, isRunning: false, lastUpdateTime: null };
+        const timerDisplay = document.getElementById('admin-timer-display');
+        let hints = [];
+
+        socket.on('timer_update', (state) => {
+            timerState = state;
+            updateDisplay();
+        });
+
+        function updateDisplay() {
+            let currentRemaining = timerState.remainingSeconds;
+            if (timerState.isRunning && timerState.lastUpdateTime) {
+                const elapsed = Math.floor((Date.now() - timerState.lastUpdateTime) / 1000);
+                currentRemaining = Math.max(0, currentRemaining - elapsed);
+            }
+            const minutes = Math.floor(currentRemaining / 60).toString().padStart(2, '0');
+            const seconds = (currentRemaining % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${minutes}:${seconds}`;
+        }
+        setInterval(updateDisplay, 1000);
+
+        // API Calls
+        async function checkLogin() {
+            const res = await fetch('/api/admin/check');
+            const data = await res.json();
+            if (data.isAdmin) {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('admin-dashboard').style.display = 'block';
+                loadHints();
+            } else {
+                document.getElementById('login-section').style.display = 'block';
+                document.getElementById('admin-dashboard').style.display = 'none';
+            }
+        }
+
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const password = document.getElementById('admin-password').value;
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                checkLogin();
+            } else {
+                document.getElementById('login-error').textContent = data.message;
+            }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await fetch('/api/admin/logout', { method: 'POST' });
+            checkLogin();
+        });
+
+        // Timer Controls
+        async function controlTimer(action, seconds = 0) {
+            await fetch('/api/admin/timer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, seconds })
+            });
+        }
+
+        document.getElementById('btn-start').addEventListener('click', () => controlTimer('start'));
+        document.getElementById('btn-pause').addEventListener('click', () => controlTimer('pause'));
+        document.getElementById('btn-set-time').addEventListener('click', () => {
+            const min = parseInt(document.getElementById('set-time-min').value) || 0;
+            controlTimer('set', min * 60);
+        });
+        document.getElementById('btn-add-10m').addEventListener('click', () => controlTimer('add', 600));
+        document.getElementById('btn-sub-10m').addEventListener('click', () => controlTimer('subtract', 600));
+
+        // Hint Management
+        async function loadHints() {
+            const res = await fetch('/api/admin/hints');
+            hints = await res.json();
+            renderHints();
+        }
+
+        function renderHints() {
+            const container = document.getElementById('hints-container');
+            container.innerHTML = '';
+            hints.forEach((h, index) => {
+                const div = document.createElement('div');
+                div.className = 'hint-item';
+                div.innerHTML = `
+                    <input type="text" class="qnum" placeholder="번호" value="${h.qNumber || ''}" onchange="updateHint(${index}, 'qNumber', this.value)">
+                    <input type="text" placeholder="힌트 내용" value="${h.hint || ''}" onchange="updateHint(${index}, 'hint', this.value)">
+                    <input type="text" placeholder="정답" value="${h.answer || ''}" onchange="updateHint(${index}, 'answer', this.value)">
+                    <button class="danger" onclick="removeHint(${index})">삭제</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.updateHint = (index, field, value) => {
+            hints[index][field] = value;
+        };
+
+        window.removeHint = (index) => {
+            hints.splice(index, 1);
+            renderHints();
+        };
+
+        document.getElementById('btn-add-hint').addEventListener('click', () => {
+            hints.push({ qNumber: '', hint: '', answer: '' });
+            renderHints();
+        });
+
+        document.getElementById('btn-save-hints').addEventListener('click', async () => {
+            const res = await fetch('/api/admin/hints', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hints })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('저장되었습니다.');
+            }
+        });
+
+        // Initial check
+        checkLogin();
+    </script>
+</body>
+</html>
