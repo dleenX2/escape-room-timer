@@ -18,7 +18,10 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+const publicDir = fs.existsSync(path.join(__dirname, 'public')) 
+    ? path.join(__dirname, 'public') 
+    : __dirname;
+app.use(express.static(publicDir));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
 let appData = {
@@ -140,12 +143,12 @@ io.on('connection', (socket) => {
 });
 
 app.get('/admin', (req, res) => {
-    res.sendFile('admin.html', { root: path.join(__dirname, 'public') });
+    res.sendFile('admin.html', { root: publicDir });
 });
 
 app.use((req, res) => {
     if (req.path.startsWith('/api')) return res.status(404).send('Not found');
-    res.sendFile('index.html', { root: path.join(__dirname, 'public') });
+    res.sendFile('index.html', { root: publicDir });
 });
 
 const PORT = process.env.PORT || 3000;
