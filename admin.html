@@ -34,6 +34,15 @@
             </div>
         </div>
 
+        <div class="control-group">
+            <h3>게임 진행 통계</h3>
+            <div style="font-size: 1.1rem; margin-bottom: 1.2rem; line-height: 1.6;">
+                현재 힌트 조회 횟수: <strong id="admin-stat-hints" style="color: #2196F3;">0</strong>회<br>
+                현재 정답 조회 횟수: <strong id="admin-stat-answers" style="color: #f44336;">0</strong>회
+            </div>
+            <button id="btn-reset-stats" style="background-color: #ff9800; font-size: 0.95rem; padding: 8px 16px;">통계 초기화</button>
+        </div>
+
         <div class="control-group" style="border-bottom: none;">
             <h3>힌트/정답 관리</h3>
             <div id="hints-container"></div>
@@ -53,6 +62,11 @@
         socket.on('timer_update', (state) => {
             timerState = state;
             updateDisplay();
+        });
+
+        socket.on('stats_update', (stats) => {
+            document.getElementById('admin-stat-hints').textContent = stats.hintRequests;
+            document.getElementById('admin-stat-answers').textContent = stats.answerViews;
         });
 
         function updateDisplay() {
@@ -118,6 +132,17 @@
         });
         document.getElementById('btn-add-10m').addEventListener('click', () => controlTimer('add', 600));
         document.getElementById('btn-sub-10m').addEventListener('click', () => controlTimer('subtract', 600));
+
+        // Stats Controls
+        document.getElementById('btn-reset-stats').addEventListener('click', async () => {
+            if (confirm('통계 수치를 정말 초기화하시겠습니까?')) {
+                const res = await fetch('/api/admin/stats/reset', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('초기화되었습니다.');
+                }
+            }
+        });
 
         // Hint Management
         async function loadHints() {

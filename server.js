@@ -29,7 +29,11 @@ let appData = {
         isRunning: false,
         lastUpdateTime: null
     },
-    hints: []
+    hints: [],
+    stats: {
+        hintRequests: 0,
+        answerViews: 0
+    }
 };
 
 if (fs.existsSync(DATA_FILE)) {
@@ -40,6 +44,11 @@ if (fs.existsSync(DATA_FILE)) {
             appData.timerState = parsed.timerState;
         }
         if (parsed.hints) appData.hints = parsed.hints;
+        if (parsed.stats) {
+            appData.stats = parsed.stats;
+        } else {
+            appData.stats = { hintRequests: 0, answerViews: 0 };
+        }
     } catch(e) {
         console.error("Error reading data file", e);
     }
@@ -66,10 +75,24 @@ app.post('/api/hint', (req, res) => {
     const { qNumber } = req.body;
     const item = appData.hints.find(h => h.qNumber === String(qNumber).trim());
     if (item) {
+        appData.stats.hintRequests++;
+        saveData();
+        io.emit('stats_update', appData.stats);
         res.json({ success: true, hint: item.hint, answer: item.answer });
     } else {
         res.json({ success: false, message: '해당 문제 번호에 대한 정보를 찾을 수 없습니다.' });
     }
+});
+
+app.get('/api/stats', (req, res) => {
+    res.json(appData.stats);
+});
+
+app.post('/api/stats/answer', (req, res) => {
+    appData.stats.answerViews++;
+    saveData();
+    io.emit('stats_update', appData.stats);
+    res.json({ success: true, stats: appData.stats });
 });
 
 // Admin Auth APIs
@@ -101,6 +124,13 @@ app.post('/api/admin/hints', requireAdminAPI, (req, res) => {
     appData.hints = req.body.hints;
     saveData();
     res.json({ success: true });
+});
+
+app.post('/api/admin/stats/reset', requireAdminAPI, (req, res) => {
+    appData.stats = { hintRequests: 0, answerViews: 0 };
+    saveData();
+    io.emit('stats_update', appData.stats);
+    res.json({ success: true, stats: appData.stats });
 });
 
 app.post('/api/admin/timer', requireAdminAPI, (req, res) => {
@@ -139,6 +169,7 @@ app.post('/api/admin/timer', requireAdminAPI, (req, res) => {
 
 io.on('connection', (socket) => {
     socket.emit('timer_update', appData.timerState);
+    socket.emit('stats_update', appData.stats);
 });
 
 app.get('/admin', (req, res) => {

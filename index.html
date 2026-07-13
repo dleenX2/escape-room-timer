@@ -16,6 +16,9 @@
         <input type="text" id="qNumber" placeholder="문제 번호를 입력하세요">
         <button id="btn-hint">확인</button>
         <div id="hint-result"></div>
+        <div class="stats-display" style="margin-top: 20px; font-size: 0.9rem; border-top: 1px dashed var(--primary-color); padding-top: 10px; opacity: 0.8;">
+            힌트 조회: <span id="stat-hints">0</span>회 | 정답 조회: <span id="stat-answers">0</span>회
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -27,6 +30,11 @@
         socket.on('timer_update', (state) => {
             timerState = state;
             updateDisplay();
+        });
+
+        socket.on('stats_update', (stats) => {
+            document.getElementById('stat-hints').textContent = stats.hintRequests;
+            document.getElementById('stat-answers').textContent = stats.answerViews;
         });
 
         let lastAppliedPhase = null;
@@ -110,9 +118,15 @@
                     `;
 
                     // Add listener to show the answer
-                    document.getElementById('btn-show-answer').addEventListener('click', function() {
+                    document.getElementById('btn-show-answer').addEventListener('click', async function() {
                         document.getElementById('answer-box').style.display = 'block';
                         this.style.display = 'none'; // Hide "Show Answer" button
+                        
+                        try {
+                            await fetch('/api/stats/answer', { method: 'POST' });
+                        } catch (err) {
+                            console.error(err);
+                        }
                     });
                 } else {
                     resultDiv.innerHTML = `<span style="color: #ffaaaa;">${data.message}</span>`;
