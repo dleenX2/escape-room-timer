@@ -3,17 +3,16 @@ const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
-const session = require('express-session');
+const session = require('cookie-session');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(session({
-    secret: 'escape-room-secret-key-123!',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
+    name: 'session',
+    keys: ['escape-room-secret-key-123!'],
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
 app.use(express.json());
@@ -85,7 +84,7 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 app.post('/api/admin/logout', (req, res) => {
-    req.session.destroy();
+    req.session = null;
     res.json({ success: true });
 });
 
