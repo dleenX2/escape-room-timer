@@ -202,3 +202,106 @@ button:hover {
                     -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
 }
+
+/* Admin Page Clean Monochromatic Styles */
+body.admin-page {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    text-shadow: none;
+    overflow: auto;
+    min-height: 100vh;
+    display: block;
+}
+
+body.admin-page #noise-canvas, 
+body.admin-page .scanlines {
+    display: none;
+}
+
+body.admin-page .admin-container {
+    background-color: #1e1e1e;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #333333;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 800px;
+    margin: 2rem auto;
+    box-sizing: border-box;
+}
+
+body.admin-page .control-group {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #333333;
+}
+
+body.admin-page h2, 
+body.admin-page h3 {
+    color: #ffffff;
+    margin-top: 0;
+}
+
+body.admin-page input[type="text"], 
+body.admin-page input[type="password"], 
+body.admin-page input[type="number"] {
+    border: 1px solid #444444;
+    background-color: #2a2a2a;
+    color: #ffffff;
+    font-family: inherit;
+    box-shadow: none;
+    width: calc(100% - 22px);
+    margin-bottom: 1rem;
+}
+
+body.admin-page input[type="text"]:focus, 
+body.admin-page input[type="password"]:focus, 
+body.admin-page input[type="number"]:focus {
+    border-color: #2196F3;
+    box-shadow: none;
+}
+
+body.admin-page button {
+    background-color: #2196F3;
+    color: #ffffff;
+    font-family: inherit;
+    font-weight: normal;
+    text-shadow: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+body.admin-page button:hover {
+    background-color: #1976D2;
+    box-shadow: none;
+}
+
+body.admin-page button.danger {
+    background-color: #f44336;
+}
+
+body.admin-page button.danger:hover {
+    background-color: #d32f2f;
+}
+
+body.admin-page .hint-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    background: #2a2a2a;
+    padding: 10px;
+    border-radius: 4px;
+    align-items: center;
+}
+
+body.admin-page .hint-item input {
+    margin-bottom: 0;
+    width: auto;
+    flex: 1;
+}
+
+body.admin-page .hint-item input.qnum {
+    flex: 0 0 60px;
+}
