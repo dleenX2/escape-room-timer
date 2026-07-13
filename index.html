@@ -41,6 +41,17 @@
         const noiseCanvas = document.getElementById('noise-canvas');
 
         function updateBackground(currentRemaining) {
+            if (currentRemaining <= 0) {
+                if (lastAppliedPhase !== 'timeout') {
+                    lastAppliedPhase = 'timeout';
+                    document.body.className = 'theme-timeout';
+                    if (noiseCanvas) {
+                        noiseCanvas.style.opacity = '0';
+                    }
+                }
+                return;
+            }
+
             const minutes = currentRemaining / 60;
             let phase = 1;
 
