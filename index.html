@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <canvas id="noise-canvas"></canvas>
+    <div class="scanlines"></div>
     <div id="timer-display">60:00</div>
     
     <div class="hint-section">
@@ -28,24 +30,32 @@
         });
 
         let lastAppliedPhase = null;
+        const noiseCanvas = document.getElementById('noise-canvas');
 
         function updateBackground(currentRemaining) {
             const minutes = currentRemaining / 60;
-            let phase = 6;
+            let phase = 1;
 
             if (minutes >= 30) {
-                phase = 1; // 30 ~ 40m: Serene Buddha temple
+                phase = 1;
             } else if (minutes >= 20) {
-                phase = 2; // 20 ~ 30m: Ominous Buddha temple
+                phase = 2;
             } else if (minutes >= 10) {
-                phase = 4; // 10 ~ 20m: Occult Room (Cult starter)
+                phase = 3;
             } else {
-                phase = 6; // 0 ~ 10m: Intense Cult Chamber (Cult climax)
+                phase = 4;
             }
 
             if (phase !== lastAppliedPhase) {
                 lastAppliedPhase = phase;
-                document.body.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('/images/bg_phase${phase}.jpg')`;
+                document.body.className = `theme-phase${phase}`;
+                
+                if (noiseCanvas) {
+                    if (phase === 1) noiseCanvas.style.opacity = '0.05';
+                    else if (phase === 2) noiseCanvas.style.opacity = '0.15';
+                    else if (phase === 3) noiseCanvas.style.opacity = '0.28';
+                    else if (phase === 4) noiseCanvas.style.opacity = '0.50';
+                }
             }
         }
 
@@ -112,6 +122,45 @@
                 resultDiv.innerHTML = `<span style="color: #ffaaaa;">오류가 발생했습니다.</span>`;
             }
         });
+
+        // Noise Canvas Generator
+        const canvas = document.getElementById('noise-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth / 2; // Downscaled for performance
+            canvas.height = window.innerHeight / 2;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function generateNoise() {
+            const width = canvas.width;
+            const height = canvas.height;
+            if (width === 0 || height === 0) return;
+            
+            const imgData = ctx.createImageData(width, height);
+            const data = imgData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const val = Math.floor(Math.random() * 255);
+                data[i] = val;
+                data[i+1] = val;
+                data[i+2] = val;
+                data[i+3] = 255;
+            }
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        let lastNoiseTime = 0;
+        function renderLoop(time) {
+            if (time - lastNoiseTime > 40) { // ~25 fps
+                generateNoise();
+                lastNoiseTime = time;
+            }
+            requestAnimationFrame(renderLoop);
+        }
+        requestAnimationFrame(renderLoop);
     </script>
 </body>
 </html>
