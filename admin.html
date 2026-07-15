@@ -158,9 +158,9 @@
                 const div = document.createElement('div');
                 div.className = 'hint-item';
                 div.innerHTML = `
-                    <input type="text" class="qnum" placeholder="번호" value="${h.qNumber || ''}" onchange="updateHint(${index}, 'qNumber', this.value)">
-                    <input type="text" placeholder="힌트 내용" value="${h.hint || ''}" onchange="updateHint(${index}, 'hint', this.value)">
-                    <input type="text" placeholder="정답" value="${h.answer || ''}" onchange="updateHint(${index}, 'answer', this.value)">
+                    <input type="text" class="qnum" placeholder="번호" value="${h.qNumber || ''}" oninput="updateHint(${index}, 'qNumber', this.value)">
+                    <input type="text" placeholder="힌트 내용" value="${h.hint || ''}" oninput="updateHint(${index}, 'hint', this.value)">
+                    <input type="text" placeholder="정답" value="${h.answer || ''}" oninput="updateHint(${index}, 'answer', this.value)">
                     <button class="danger" onclick="removeHint(${index})">삭제</button>
                 `;
                 container.appendChild(div);

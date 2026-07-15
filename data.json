@@ -10,5 +10,13 @@
       "hint": "ㅁㅁ",
       "answer": "ㄴㄴ"
     }
-  ]
+  ],
+  "stats": {
+    "hintRequests": 1,
+    "answerViews": 0,
+    "viewedHints": [
+      "1"
+    ],
+    "viewedAnswers": []
+  }
 }
