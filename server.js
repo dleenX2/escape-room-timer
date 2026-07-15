@@ -77,7 +77,13 @@ app.get('/api/timer', (req, res) => {
 
 app.post('/api/hint', (req, res) => {
     const { qNumber } = req.body;
+    if (qNumber === undefined || qNumber === null) {
+        return res.json({ success: false, message: '문제 번호를 입력하세요.' });
+    }
     const cleanQ = String(qNumber).trim();
+    if (cleanQ === '' || cleanQ === 'undefined' || cleanQ === 'null') {
+        return res.json({ success: false, message: '올바른 문제 번호가 아닙니다.' });
+    }
     const item = appData.hints.find(h => h.qNumber === cleanQ);
     if (item) {
         if (!appData.stats.viewedHints.includes(cleanQ)) {
@@ -98,8 +104,14 @@ app.get('/api/stats', (req, res) => {
 
 app.post('/api/stats/answer', (req, res) => {
     const { qNumber } = req.body;
+    if (qNumber === undefined || qNumber === null) {
+        return res.status(400).json({ error: 'qNumber is required' });
+    }
     const cleanQ = String(qNumber).trim();
-    if (cleanQ && !appData.stats.viewedAnswers.includes(cleanQ)) {
+    if (cleanQ === '' || cleanQ === 'undefined' || cleanQ === 'null') {
+        return res.status(400).json({ error: 'Invalid qNumber' });
+    }
+    if (!appData.stats.viewedAnswers.includes(cleanQ)) {
         appData.stats.viewedAnswers.push(cleanQ);
         appData.stats.answerViews = appData.stats.viewedAnswers.length;
         saveData();
