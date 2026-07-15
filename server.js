@@ -32,7 +32,9 @@ let appData = {
     hints: [],
     stats: {
         hintRequests: 0,
-        answerViews: 0
+        answerViews: 0,
+        viewedHints: [],
+        viewedAnswers: []
     }
 };
 
@@ -46,8 +48,10 @@ if (fs.existsSync(DATA_FILE)) {
         if (parsed.hints) appData.hints = parsed.hints;
         if (parsed.stats) {
             appData.stats = parsed.stats;
+            if (!appData.stats.viewedHints) appData.stats.viewedHints = [];
+            if (!appData.stats.viewedAnswers) appData.stats.viewedAnswers = [];
         } else {
-            appData.stats = { hintRequests: 0, answerViews: 0 };
+            appData.stats = { hintRequests: 0, answerViews: 0, viewedHints: [], viewedAnswers: [] };
         }
     } catch(e) {
         console.error("Error reading data file", e);
@@ -73,11 +77,15 @@ app.get('/api/timer', (req, res) => {
 
 app.post('/api/hint', (req, res) => {
     const { qNumber } = req.body;
-    const item = appData.hints.find(h => h.qNumber === String(qNumber).trim());
+    const cleanQ = String(qNumber).trim();
+    const item = appData.hints.find(h => h.qNumber === cleanQ);
     if (item) {
-        appData.stats.hintRequests++;
-        saveData();
-        io.emit('stats_update', appData.stats);
+        if (!appData.stats.viewedHints.includes(cleanQ)) {
+            appData.stats.viewedHints.push(cleanQ);
+            appData.stats.hintRequests = appData.stats.viewedHints.length;
+            saveData();
+            io.emit('stats_update', appData.stats);
+        }
         res.json({ success: true, hint: item.hint, answer: item.answer });
     } else {
         res.json({ success: false, message: '해당 문제 번호에 대한 정보를 찾을 수 없습니다.' });
@@ -89,9 +97,14 @@ app.get('/api/stats', (req, res) => {
 });
 
 app.post('/api/stats/answer', (req, res) => {
-    appData.stats.answerViews++;
-    saveData();
-    io.emit('stats_update', appData.stats);
+    const { qNumber } = req.body;
+    const cleanQ = String(qNumber).trim();
+    if (cleanQ && !appData.stats.viewedAnswers.includes(cleanQ)) {
+        appData.stats.viewedAnswers.push(cleanQ);
+        appData.stats.answerViews = appData.stats.viewedAnswers.length;
+        saveData();
+        io.emit('stats_update', appData.stats);
+    }
     res.json({ success: true, stats: appData.stats });
 });
 
@@ -127,7 +140,7 @@ app.post('/api/admin/hints', requireAdminAPI, (req, res) => {
 });
 
 app.post('/api/admin/stats/reset', requireAdminAPI, (req, res) => {
-    appData.stats = { hintRequests: 0, answerViews: 0 };
+    appData.stats = { hintRequests: 0, answerViews: 0, viewedHints: [], viewedAnswers: [] };
     saveData();
     io.emit('stats_update', appData.stats);
     res.json({ success: true, stats: appData.stats });

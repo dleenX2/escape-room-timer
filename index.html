@@ -134,7 +134,11 @@
                         this.style.display = 'none'; // Hide "Show Answer" button
                         
                         try {
-                            await fetch('/api/stats/answer', { method: 'POST' });
+                            await fetch('/api/stats/answer', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ qNumber })
+                            });
                         } catch (err) {
                             console.error(err);
                         }
