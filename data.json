@@ -1,22 +1,60 @@
 {
   "timerState": {
-    "remainingSeconds": 0,
-    "isRunning": true,
-    "lastUpdateTime": 1783865479193
+    "remainingSeconds": 2400,
+    "isRunning": false,
+    "lastUpdateTime": null
   },
   "hints": [
     {
-      "qNumber": "1",
-      "hint": "ㅁㅁ",
-      "answer": "ㄴㄴ"
+      "qNumber": "a",
+      "hint": "피타고라스",
+      "answer": "413"
+    },
+    {
+      "qNumber": "b",
+      "hint": "칠판",
+      "answer": "-"
+    },
+    {
+      "qNumber": "c",
+      "hint": "좌표평면",
+      "answer": "책상 아래"
+    },
+    {
+      "qNumber": "d",
+      "hint": "?의 개수",
+      "answer": "3428"
+    },
+    {
+      "qNumber": "e",
+      "hint": "ㅁ",
+      "answer": "7"
+    },
+    {
+      "qNumber": "f",
+      "hint": "획 부호 변환",
+      "answer": "8"
+    },
+    {
+      "qNumber": "g",
+      "hint": "자음",
+      "answer": "7"
+    },
+    {
+      "qNumber": "h",
+      "hint": "모이면 보이는",
+      "answer": "5"
+    },
+    {
+      "qNumber": "i",
+      "hint": "액자, 퍼즐",
+      "answer": "0328"
     }
   ],
   "stats": {
-    "hintRequests": 1,
+    "hintRequests": 0,
     "answerViews": 0,
-    "viewedHints": [
-      "1"
-    ],
+    "viewedHints": [],
     "viewedAnswers": []
   }
 }
