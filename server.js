@@ -45,7 +45,7 @@ if (fs.existsSync(DATA_FILE)) {
         if (parsed.timerState) {
             appData.timerState = parsed.timerState;
         }
-        if (parsed.hints) appData.hints = parsed.hints;
+        if (Array.isArray(parsed.hints)) appData.hints = parsed.hints;
         if (parsed.stats) {
             appData.stats = parsed.stats;
             if (!appData.stats.viewedHints) appData.stats.viewedHints = [];
@@ -54,12 +54,18 @@ if (fs.existsSync(DATA_FILE)) {
             appData.stats = { hintRequests: 0, answerViews: 0, viewedHints: [], viewedAnswers: [] };
         }
     } catch(e) {
-        console.error("Error reading data file", e);
+        console.error("Error reading data file. Initializing defaults.", e);
     }
 }
 
 function saveData() {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(appData, null, 2));
+    try {
+        const tempFile = DATA_FILE + '.tmp';
+        fs.writeFileSync(tempFile, JSON.stringify(appData, null, 2));
+        fs.renameSync(tempFile, DATA_FILE); // Atomic write prevents data corruption
+    } catch (e) {
+        console.error("Failed to save data:", e);
+    }
 }
 
 function requireAdminAPI(req, res, next) {
@@ -146,9 +152,13 @@ app.get('/api/admin/hints', requireAdminAPI, (req, res) => {
 });
 
 app.post('/api/admin/hints', requireAdminAPI, (req, res) => {
-    appData.hints = req.body.hints;
-    saveData();
-    res.json({ success: true });
+    if (Array.isArray(req.body.hints)) {
+        appData.hints = req.body.hints;
+        saveData();
+        res.json({ success: true });
+    } else {
+        res.status(400).json({ success: false, message: 'Invalid hints format.' });
+    }
 });
 
 app.post('/api/admin/stats/reset', requireAdminAPI, (req, res) => {
@@ -192,6 +202,12 @@ app.post('/api/admin/timer', requireAdminAPI, (req, res) => {
     res.json({ success: true, timerState: state });
 });
 
+app.post('/api/admin/audio', requireAdminAPI, (req, res) => {
+    const { action, filename, loop } = req.body;
+    io.emit('audio_control', { action, filename, loop });
+    res.json({ success: true });
+});
+
 io.on('connection', (socket) => {
     socket.emit('timer_update', appData.timerState);
     socket.emit('stats_update', appData.stats);
@@ -199,6 +215,14 @@ io.on('connection', (socket) => {
 
 app.get('/admin', (req, res) => {
     res.sendFile('admin.html', { root: publicDir });
+});
+
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        console.error('Bad JSON parsing:', err.message);
+        return res.status(400).json({ success: false, message: 'Invalid JSON payload.' });
+    }
+    next();
 });
 
 app.use((req, res) => {

@@ -35,6 +35,18 @@
         </div>
 
         <div class="control-group">
+            <h3>오디오 원격 제어</h3>
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="audio-filename" placeholder="음원 파일명 입력 (예: bgm.mp3)" style="width: 250px; display: inline-block;">
+                <label style="color: #fff; margin-left: 10px;"><input type="checkbox" id="audio-loop" style="width: auto; margin-right: 5px;">반복 재생(Loop)</label>
+            </div>
+            <div>
+                <button id="btn-audio-play" style="background-color: #4CAF50;">▶ 재생하기</button>
+                <button id="btn-audio-stop" class="danger">■ 정지하기</button>
+            </div>
+        </div>
+
+        <div class="control-group">
             <h3>게임 진행 통계</h3>
             <div style="font-size: 1.1rem; margin-bottom: 1.2rem; line-height: 1.6;">
                 현재 힌트 조회 횟수: <strong id="admin-stat-hints" style="color: #2196F3;">0</strong>회<br>
@@ -133,7 +145,28 @@
         document.getElementById('btn-add-10m').addEventListener('click', () => controlTimer('add', 600));
         document.getElementById('btn-sub-10m').addEventListener('click', () => controlTimer('subtract', 600));
 
+        // Audio Controls
+        async function controlAudio(action) {
+            const filename = document.getElementById('audio-filename').value.trim();
+            const loop = document.getElementById('audio-loop').checked;
+            
+            if (action === 'play' && !filename) {
+                alert('음원 파일명을 입력하세요!');
+                return;
+            }
+
+            await fetch('/api/admin/audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, filename, loop })
+            });
+        }
+
+        document.getElementById('btn-audio-play').addEventListener('click', () => controlAudio('play'));
+        document.getElementById('btn-audio-stop').addEventListener('click', () => controlAudio('stop'));
+
         // Stats Controls
+
         document.getElementById('btn-reset-stats').addEventListener('click', async () => {
             if (confirm('통계 수치를 정말 초기화하시겠습니까?')) {
                 const res = await fetch('/api/admin/stats/reset', { method: 'POST' });

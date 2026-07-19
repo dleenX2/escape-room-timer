@@ -37,6 +37,24 @@
             document.getElementById('stat-answers').textContent = stats.answerViews;
         });
 
+        let currentAudio = null;
+        socket.on('audio_control', (data) => {
+            if (data.action === 'play') {
+                if (currentAudio) {
+                    currentAudio.pause();
+                }
+                currentAudio = new Audio(`/${data.filename}`);
+                currentAudio.loop = data.loop;
+                currentAudio.play().catch(e => console.error("오디오 재생 실패:", e));
+            } else if (data.action === 'stop') {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    currentAudio = null;
+                }
+            }
+        });
+
         let lastAppliedPhase = null;
         const noiseCanvas = document.getElementById('noise-canvas');
 
