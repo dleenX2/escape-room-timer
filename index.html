@@ -119,12 +119,12 @@
                 const data = await res.json();
                 if (data.success) {
                     resultDiv.innerHTML = `
-                        <div style="margin-bottom: 15px;">
-                            <strong>힌트:</strong> ${data.hint || '-'}
+                        <div style="margin-bottom: 15px; text-align: left; word-break: keep-all; line-height: 1.5;">
+                            <strong>💡 힌트:</strong><br/> ${data.hint || '-'}
                         </div>
-                        <button id="btn-show-answer" style="background-color: #ff9800; font-size: 0.9rem; padding: 6px 12px;">정답 보기</button>
-                        <div id="answer-box" style="margin-top: 15px; display: none;">
-                            <strong>정답:</strong> ${data.answer || '-'}
+                        <button id="btn-show-answer" style="background-color: #ff9800; font-size: 0.9rem; padding: 6px 12px; display: block; margin: 0 auto;">정답 보기</button>
+                        <div id="answer-box" style="margin-top: 15px; display: none; text-align: left; word-break: keep-all; line-height: 1.5;">
+                            <strong>🔑 정답:</strong><br/> ${data.answer || '-'}
                         </div>
                     `;
 
