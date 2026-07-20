@@ -6,9 +6,14 @@
   },
   "hints": [
     {
-      "qNumber": "a",
+      "qNumber": "a-1",
       "hint": "피타고라스",
-      "answer": "413"
+      "answer": "41"
+    },
+    {
+      "qNumber": "a-2",
+      "hint": "컴퓨터 자판, 증거 조합",
+      "answer": "3"
     },
     {
       "qNumber": "b",
